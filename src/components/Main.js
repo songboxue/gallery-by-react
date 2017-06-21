@@ -31,7 +31,13 @@ imageDatas = (function getImageUrl(imageDatasArr){
 var ImgFigure = React.createClass({
 	
 	handerClick: function(e){
-		this.props.inverse();
+
+		if(this.props.arrange.isCenter){
+			this.props.inverse();
+		}else{
+			this.props.center();
+		}
+		
 		e.stopPropagation();
 		e.preventDefault();
 	},
@@ -48,6 +54,9 @@ var ImgFigure = React.createClass({
 				+ 'deg)';
 		}
 
+		if(this.props.arrange.isCenter){
+			styleObj.zIndex = 11;
+		}
 		var imgFigureClassName = "img-figure";
 			imgFigureClassName += this.props.arrange.isInverse ? ' is-inverse' : '' ;
 
@@ -67,6 +76,38 @@ var ImgFigure = React.createClass({
 		)
 	}
 })
+
+//控制组件
+var ControllerUnits = React.createClass({
+	handleClick: function(e){
+		//区分点击的是居中图片对应的按钮还是翻转
+		if(this.props.arrange.isCenter){
+			this.props.inverse();
+		}else{
+			this.props.center();
+		}
+		e.stopPropagation();
+		e.preventDefault();
+	},
+
+	render:function(){
+		var UnitClassName = "controller-unit";
+		if(this.props.arrange.isCenter){
+			UnitClassName += " is-center";
+			if(this.props.arrange.isInverse){
+				UnitClassName += " is-inverse";
+			}
+		}
+
+
+		return(
+			<span className={UnitClassName} onClick={this.handleClick}>
+			<i className="arrow-icon"></i>
+			</span>
+		)
+	}
+})
+
 
 
 
@@ -118,13 +159,18 @@ var GalleryByReact = React.createClass ({
 		vPosRangeX = vPosRange.x,
 
 		imgsArrangeTopArr = [],
-		topImgNum = Math.ceil(Math.random() * 2),
+		topImgNum = Math.floor(Math.random() * 2),
 		topImgSpliceIndex = 0,
 
 		//居中imgsArrangeCenterArr
 		imgsArrangeCenterArr = imgsArrangeArr.splice(centerIndex,1);
 
-		imgsArrangeCenterArr[0].pos = centerPos;
+		imgsArrangeCenterArr[0] = {
+			pos: centerPos,
+			rotate:0,
+			isCenter:true
+		 
+		}
 		imgsArrangeCenterArr[0].rotate = 0;
 
 		//拿到上方的图片
@@ -138,7 +184,8 @@ var GalleryByReact = React.createClass ({
 					top: getRamdom(vPosRangeTopY[0] , vPosRangeTopY[1]),
 					left: getRamdom(vPosRangeX[0],vPosRangeX[1])
 				},
-				rotate: getDegRamdom()
+				rotate: getDegRamdom(),
+				isCenter: false
 			}
 		});
 
@@ -157,7 +204,8 @@ var GalleryByReact = React.createClass ({
 					top: getRamdom(hPostRangeY[0],hPostRangeY[1]),
 					left: getRamdom(hPosRangeLORX[0],hPosRangeLORX[1])
 				},
-				rotate: getDegRamdom()
+				rotate: getDegRamdom(),
+				isCenter: false
 			}
 		}
 
@@ -172,6 +220,14 @@ var GalleryByReact = React.createClass ({
 		}) ;
 
 	},
+
+	//
+	center: function(index){
+		return function(){
+			this.rearrange(index)
+		}.bind(this)
+	},
+
 
 	getInitialState : function(){
 		return{
@@ -229,13 +285,15 @@ var GalleryByReact = React.createClass ({
 					top: 0
 				},
 				rotate : 0,
-				isInverse: false
+				isInverse: false,
+				isCenter: false
 			}				
 		}
 
 		imgFigure.push(<ImgFigure data={value} ref={'imagefigure' + index}
-			arrange = {this.state.imgsArrangeArr[index]} inverse={this.inverse(index)}
-			/>);		
+			arrange = {this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index)}
+			/>);
+		controllerUnits.push(<ControllerUnits arrange={this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index)}/>)		
 		}.bind(this));
 
 	return(
@@ -244,6 +302,7 @@ var GalleryByReact = React.createClass ({
 				{imgFigure}
 			</section>
 			<nav className="controller-nav">
+				{controllerUnits}
 			</nav>
 		</section>
 	);
